@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Running Insight Card</title>
+<script>
+  // ── 데모 데이터 ─────────────────────────────────────────────
+  // 실제 측정값이 아닙니다. 실제 센서 데이터 연동(P2) 때 이 객체만 교체합니다.
+  const DEMO_DATA = {
+    isDemo: true,
+    metric: "케이던스",
+    unit: "spm",
+    unitLabel: "분당 걸음 수",
+    value: 165,
+    // 데모용 참고 범위입니다. 검증된 의학적 기준이 아닙니다.
+    referenceRange: { min: 160, max: 180 },
+    // 막대 양 끝에 보일 눈금 범위
+    scale: { min: 140, max: 200 },
+  };
+</script>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1d2129;
+    --muted: #5c6370;
+    --line: #e2e5ea;
+    --badge-bg: #fff4d6;
+    --badge-text: #7a5300;
+    --track: #e6e8ec;
+    --band: #c9cfd9;
+    --marker: #3b5bdb;
+    --focus: #3b5bdb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111317;
+      --card: #1b1e24;
+      --text: #e8eaee;
+      --muted: #a3a9b4;
+      --line: #2c3038;
+      --badge-bg: #3d3216;
+      --badge-text: #f3d68a;
+      --track: #2c3038;
+      --band: #4a515e;
+      --marker: #8ea6ff;
+      --focus: #8ea6ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111317;
+    --card: #1b1e24;
+    --text: #e8eaee;
+    --muted: #a3a9b4;
+    --line: #2c3038;
+    --badge-bg: #3d3216;
+    --badge-text: #f3d68a;
+    --track: #2c3038;
+    --band: #4a515e;
+    --marker: #8ea6ff;
+    --focus: #8ea6ff;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--badge-bg);
+    color: var(--badge-text);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 14px 0 0;
+  }
+  h1 .unit-label {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 15px;
+  }
+  .value {
+    margin: 8px 0 0;
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  .value .unit {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+  .demo-note {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: var(--badge-text);
+    font-weight: 600;
+  }
+  .summary {
+    margin: 14px 0 0;
+    font-size: 17px;
+  }
+
+  .range { margin-top: 24px; }
+  .range-title {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 30px;
+  }
+  .bar {
+    position: relative;
+    height: 12px;
+    background: var(--track);
+    border-radius: 999px;
+  }
+  .band {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--band);
+    border-radius: 999px;
+  }
+  .marker {
+    position: absolute;
+    top: -6px;
+    width: 4px;
+    height: 24px;
+    margin-left: -2px;
+    background: var(--marker);
+    border-radius: 2px;
+  }
+  .marker-label {
+    position: absolute;
+    bottom: 28px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--marker);
+  }
+  .ticks {
+    position: relative;
+    height: 20px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .ticks span {
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .ticks span:first-child { transform: none; }
+  .ticks span:last-child { transform: translateX(-100%); }
+  .range-note {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  details {
+    margin-top: 24px;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 8px 0;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: " ▾"; color: var(--muted); }
+  details[open] summary::after { content: " ▴"; }
+  summary:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+  details section { margin-top: 12px; }
+  details h2 {
+    font-size: 15px;
+    margin: 0 0 4px;
+  }
+  details p {
+    margin: 0;
+    font-size: 15px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<main>
+  <article class="card" aria-labelledby="metric-title">
+    <span class="badge" id="demo-badge">데모 데이터</span>
+
+    <h1 id="metric-title">
+      <span id="metric-name"></span>
+      <span class="unit-label" id="metric-unit-label"></span>
+    </h1>
+
+    <p class="value" id="metric-value"></p>
+    <p class="demo-note" id="demo-note">예시 값이며 실제 측정 결과가 아닙니다.</p>
+
+    <p class="summary">1분 동안 발이 땅에 닿은 횟수예요. 숫자가 클수록 1분 동안 더 많은 걸음을 디뎠다는 뜻이에요.</p>
+
+    <section class="range" aria-labelledby="range-title">
+      <p class="range-title" id="range-title">참고 범위 안에서 내 위치</p>
+      <div class="bar" id="bar" role="img">
+        <div class="band" id="band"></div>
+        <div class="marker" id="marker"><span class="marker-label" id="marker-label"></span></div>
+      </div>
+      <div class="ticks" id="ticks" aria-hidden="true"></div>
+      <p class="range-note">데모용 참고 범위 · 개인차 있음 · 의학적 기준 아님</p>
+    </section>
+
+    <details>
+      <summary>자세히 보기</summary>
+
+      <section>
+        <h2>케이던스는 이렇게 세요</h2>
+        <p>달리는 동안 발이 땅에 닿을 때마다 한 걸음으로 세고, 그 수를 1분 기준으로 바꾼 값이에요. KNEECH는 무릎에 찬 센서의 움직임으로 걸음을 세는 방식을 목표로 하고 있어요.</p>
+      </section>
+
+      <section>
+        <h2>왜 사람마다 다를까요</h2>
+        <p>케이던스는 키, 다리 길이, 달리는 속도, 러닝 경험에 따라 자연스럽게 달라져요. 같은 사람도 천천히 달릴 때와 빠르게 달릴 때 숫자가 달라요. 그래서 하나의 정답 숫자는 없어요.</p>
+      </section>
+
+      <section>
+        <h2>이 데이터에 대해</h2>
+        <p>지금 보이는 숫자는 화면을 설명하기 위해 만든 예시 값이에요. 실제로 측정한 결과가 아니고, 참고 범위도 검증된 기준이 아닌 데모용 예시예요. 센서 측정은 아직 검증 중이에요.</p>
+      </section>
+    </details>
+  </article>
+</main>
+
+<script>
+  (function render(data) {
+    const pct = (v) => ((v - data.scale.min) / (data.scale.max - data.scale.min)) * 100;
+    const clamp = (n) => Math.min(100, Math.max(0, n));
+
+    document.getElementById("demo-badge").hidden = !data.isDemo;
+    document.getElementById("demo-note").hidden = !data.isDemo;
+
+    document.getElementById("metric-name").textContent = data.metric;
+    document.getElementById("metric-unit-label").textContent = `(${data.unit}, ${data.unitLabel})`;
+
+    const valueEl = document.getElementById("metric-value");
+    valueEl.textContent = data.value;
+    const unitEl = document.createElement("span");
+    unitEl.className = "unit";
+    unitEl.textContent = data.unit;
+    valueEl.appendChild(unitEl);
+
+    const { min, max } = data.referenceRange;
+    const band = document.getElementById("band");
+    band.style.left = `${clamp(pct(min))}%`;
+    band.style.width = `${clamp(pct(max)) - clamp(pct(min))}%`;
+
+    document.getElementById("marker").style.left = `${clamp(pct(data.value))}%`;
+    document.getElementById("marker-label").textContent = `내 값 ${data.value}`;
+
+    const ticks = document.getElementById("ticks");
+    [data.scale.min, min, max, data.scale.max].forEach((t) => {
+      const s = document.createElement("span");
+      s.style.left = `${pct(t)}%`;
+      s.textContent = t;
+      ticks.appendChild(s);
+    });
+
+    document.getElementById("bar").setAttribute(
+      "aria-label",
+      `데모용 참고 범위 ${min}에서 ${max} ${data.unit} 사이에서 내 값 ${data.value} ${data.unit}의 위치`
+    );
+  })(DEMO_DATA);
+</script>
+</body>
+</html>
