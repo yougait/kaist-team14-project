@@ -133,6 +133,11 @@ function setupMetronome(bpm) {
 function renderCompare(d) {
   const box = $('compare');
   const all = $('c-shoe').checked && $('c-course').checked && $('c-speed').checked;
+  const none = !$('c-shoe').checked && !$('c-course').checked && !$('c-speed').checked;
+  if (none) {
+    box.innerHTML = '<div class="sentence">위 세 가지를 확인하면 비교를 보여 드려요.</div>';
+    return;
+  }
   if (!all) {
     box.innerHTML = '<div class="sentence">조건이 달라 비교하지 않아요.</div>';
     return;
