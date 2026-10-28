@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>행동 카드 · 재측정 비교 (데모)</title>
+<style>
+  :root {
+    --bg: #f7f6f2; --card: #ffffff; --text: #1f2a2e; --muted: #5d6870;
+    --line: #d9d5c8; --accent: #3b5b8c; --badge-bg: #e9edf5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14181b; --card: #1d2327; --text: #e8ecee; --muted: #9aa5ac;
+      --line: #333c42; --accent: #8fb0e3; --badge-bg: #26303b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; line-height: 1.55; }
+  main { max-width: 640px; margin: 0 auto; padding: 16px; }
+  .badge { display: inline-block; background: var(--badge-bg); color: var(--accent);
+    font-weight: 700; font-size: 13px; padding: 4px 10px; border-radius: 999px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px; margin-top: 14px; }
+  h1 { font-size: 20px; margin: 12px 0 0; }
+  h2 { font-size: 15px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  .big { font-size: 44px; font-weight: 800; line-height: 1.1; }
+  .unit { font-size: 16px; color: var(--muted); font-weight: 600; margin-left: 4px; }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .row { margin-top: 12px; }
+  .row b { display: block; font-size: 13px; color: var(--accent); }
+  .row span { font-size: 17px; }
+  .check { display: flex; gap: 10px; align-items: center; padding: 10px 0; font-size: 16px; }
+  .check input { width: 22px; height: 22px; accent-color: var(--accent); }
+  button { font: inherit; background: var(--accent); color: #fff; border: 0; border-radius: 10px;
+    padding: 10px 16px; font-weight: 700; cursor: pointer; }
+  @media (prefers-color-scheme: dark) { button { color: #0e1214; } }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .nums div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 4px; }
+  .nums small { display: block; color: var(--muted); font-size: 12px; }
+  .nums strong { font-size: 24px; }
+  .sentence { margin-top: 12px; font-size: 17px; font-weight: 600; }
+  .notice { font-size: 13px; color: var(--muted); margin-top: 18px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">데모 데이터</span>
+  <h1>오늘의 행동 하나</h1>
+
+  <section class="card" aria-labelledby="first-h">
+    <h2 id="first-h">1차 측정</h2>
+    <div><span class="big" id="first-cadence"></span><span class="unit">spm (분당 걸음 수)</span></div>
+    <div class="meta" id="first-meta"></div>
+    <div class="meta">예시 값이며 실제 측정 결과가 아닙니다.</div>
+  </section>
+
+  <section class="card" id="result-card" aria-live="polite"></section>
+
+  <section class="card" id="recheck-card" hidden aria-labelledby="re-h">
+    <h2 id="re-h">재측정 전에 확인해 주세요</h2>
+    <label class="check"><input type="checkbox" id="c-shoe"> 같은 신발이에요</label>
+    <label class="check"><input type="checkbox" id="c-course"> 같은 코스예요</label>
+    <label class="check"><input type="checkbox" id="c-speed"> 비슷한 속도예요</label>
+    <div id="compare" aria-live="polite"></div>
+  </section>
+
+  <p class="notice">의학적 진단이 아닙니다. 데모 기준(170 spm, +5%)이며 개인차가 있습니다.</p>
+</main>
+
+<script>
+// 데모 데이터: 화면 코드를 고치지 않고 이 값만 바꿔서 시험한다.
+const DEMO_DATA = {
+  first:   { cadence: 160, durationSec: 150 },
+  recheck: { cadence: 166 }
+};
+const RULES = { minDurationSec: 120, keepAtOrAbove: 170, raise: 1.05 };
+
+const $ = (id) => document.getElementById(id);
+
+function decide(first) {
+  if (first.durationSec < RULES.minDurationSec) return { kind: 'insufficient' };
+  if (first.cadence >= RULES.keepAtOrAbove) return { kind: 'keep' };
+  return { kind: 'action', target: Math.round(first.cadence * RULES.raise) };
+}
+
+function renderResult(d) {
+  const card = $('result-card');
+  const first = DEMO_DATA.first;
+  if (d.kind === 'insufficient') {
+    card.innerHTML = '<h2>제안</h2><div class="row"><span>데이터가 부족해 이번에는 제안하지 않아요.</span></div>';
+  } else if (d.kind === 'keep') {
+    card.innerHTML = '<h2>제안</h2><div class="row"><span>지금 박자를 유지하세요. 이번에는 바꿀 행동이 없어요.</span></div>';
+  } else {
+    card.innerHTML =
+      '<h2>바꿀 행동 하나</h2>' +
+      '<div class="row"><b>무엇을</b><span>다음 러닝에서 박자를 ' + first.cadence + ' → ' + d.target + ' spm으로</span></div>' +
+      '<div class="row"><b>왜 이것 하나만</b><span>여러 개를 바꾸면 무엇이 효과였는지 알 수 없어서, 가장 바꾸기 쉬운 하나만 골랐어요.</span></div>' +
+      '<div class="row"><b>어떻게 확인하나</b><span>3분 달린 뒤 같은 조건에서 다시 재요.</span></div>' +
+      '<div class="row"><button type="button" id="metro-btn" aria-pressed="false">메트로놈 시작 (' + d.target + ' spm)</button></div>';
+    setupMetronome(d.target);
+  }
+}
+
+// P1: 메트로놈 (외부 파일·네트워크 없이 Web Audio만 사용)
+let audioCtx = null, timer = null;
+function setupMetronome(bpm) {
+  const btn = $('metro-btn');
+  btn.addEventListener('click', () => {
+    if (timer) {
+      clearInterval(timer); timer = null;
+      btn.textContent = '메트로놈 시작 (' + bpm + ' spm)';
+      btn.setAttribute('aria-pressed', 'false');
+      return;
+    }
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const tick = () => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 880; g.gain.value = 0.15;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + 0.05);
+    };
+    tick();
+    timer = setInterval(tick, 60000 / bpm);
+    btn.textContent = '메트로놈 멈춤';
+    btn.setAttribute('aria-pressed', 'true');
+  });
+}
+
+function renderCompare(d) {
+  const box = $('compare');
+  const all = $('c-shoe').checked && $('c-course').checked && $('c-speed').checked;
+  if (!all) {
+    box.innerHTML = '<div class="sentence">조건이 달라 비교하지 않아요.</div>';
+    return;
+  }
+  const f = DEMO_DATA.first.cadence, r = DEMO_DATA.recheck.cadence, t = d.target;
+  const moved = r - f;
+  const dir = (Math.abs(t - r) < Math.abs(t - f)) ? '목표 쪽으로 ' : '목표 반대쪽으로 ';
+  const sign = moved >= 0 ? '+' : '';
+  box.innerHTML =
+    '<div class="nums">' +
+      '<div><small>1차</small><strong>' + f + '</strong></div>' +
+      '<div><small>재측정</small><strong>' + r + '</strong></div>' +
+      '<div><small>목표</small><strong>' + t + '</strong></div>' +
+    '</div>' +
+    '<div class="sentence">' + dir + sign + moved + ' spm 움직였어요.</div>';
+}
+
+(function init() {
+  const first = DEMO_DATA.first;
+  $('first-cadence').textContent = first.cadence;
+  const min = Math.floor(first.durationSec / 60), sec = first.durationSec % 60;
+  $('first-meta').textContent = '측정 시간 ' + min + '분 ' + sec + '초 · 케이던스는 1분 동안 발이 땅에 닿은 횟수예요.';
+  const d = decide(first);
+  renderResult(d);
+  if (d.kind === 'action') {
+    $('recheck-card').hidden = false;
+    ['c-shoe', 'c-course', 'c-speed'].forEach((id) => $(id).addEventListener('change', () => renderCompare(d)));
+    renderCompare(d);
+  }
+})();
+</script>
+</body>
+</html>
