@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "mode": "synthetic",
+  "session_id": "DEMO-RUN-001",
+  "movement_type": "run",
+  "source": "synthetic",
+  "sensor_sides": ["left", "right"],
+  "metric": {
+    "label": "정강이 분절 움직임 범위",
+    "value": 34.2,
+    "unit": "°",
+    "side": "left"
+  },
+  "review_status": "approved",
+  "action": {
+    "id": "observe-and-record",
+    "text": "다음 러닝에서 평소와 다른 느낌이 있었는지 관찰하고, 끝난 뒤 한 줄로 기록한다."
+  }
+}

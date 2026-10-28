@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KNEECH 다음 러닝 코칭 카드</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="core.js" defer></script><script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><a class="wordmark" href="#">KNEECH<span>다음 러닝</span></a><span class="demo-label">합성 데이터 데모</span></header>
+  <main>
+    <section class="intro"><p class="eyebrow">하나의 계획, 한 번의 실행 기록</p><h1>다음 러닝에 <br>이어지는 한 가지.</h1><p class="intro-copy">결과를 읽는 데서 멈추지 않고, 선택한 행동을<br class="desktop"> 다음 러닝과 실행 후 기록으로 연결합니다.</p></section>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+    <section class="source-panel no-print" aria-labelledby="source-title">
+      <div><h2 id="source-title">가상 자료로 시작하기</h2><p>실제 사람의 기록은 입력하지 마세요. 이전에 저장한 계획은 지난 기록에 남습니다.</p></div>
+      <div class="source-controls"><label for="scenario">데모 상황</label><div class="inline"><select id="scenario"><option value="approved">승인된 데모</option><option value="pending">미승인 데모</option><option value="missing">단측·누락 데모</option><option value="mismatch">과제 불일치 데모</option></select><button id="load-demo" type="button">불러오기</button></div></div>
+      <details class="import"><summary>합성 JSON 불러오기</summary><p>예시와 같은 형식만 지원합니다. 실제 식별정보가 들어간 추가 필드는 거절합니다.</p><a href="fixtures/approved.json" download>예시 JSON 내려받기</a><label for="json-file">JSON 파일 선택 (최대 100KB)</label><input type="file" id="json-file" accept=".json,application/json"><label for="json-input">또는 JSON 붙여넣기</label><textarea id="json-input" rows="4" maxlength="100000" spellcheck="false" placeholder="합성 JSON만 붙여넣어 주세요"></textarea><button id="import-json" class="secondary" type="button">입력 자료 불러오기</button></details>
+    </section>
+    <nav class="steps" aria-label="사용 흐름"><span id="step-one">01 행동 확인</span><span id="step-two">02 실행 후 기록</span><span id="step-three">03 다시 보기</span></nav>
+    <div class="workspace">
+      <section class="card action-card" aria-labelledby="card-title">
+        <div class="section-head"><p class="eyebrow">01 오늘의 카드</p><span id="state-badge" class="status-badge"></span></div>
+        <h2 id="card-title">다음에 할 일</h2><p id="action-text" class="action-text"></p>
+        <p id="approval-note" class="subtle"></p>
+        <div id="review-notice" class="review-notice" hidden></div>
+        <form id="plan-form" novalidate class="no-print">
+          <label class="check-label"><input type="checkbox" id="action-confirm">이 행동을 확인했습니다.</label>
+          <label for="plan-date">다음 러닝 날짜</label><input id="plan-date" type="date" required>
+          <button id="save-plan" class="primary" type="submit">이 계획 저장하기</button>
+        </form>
+        <div id="plan-summary" class="saved-summary" hidden></div>
+        <p class="local-note">이 브라우저에만 저장됩니다. 다른 기기와 공유되지 않습니다.</p>
+      </section>
+      <aside class="card facts-card" aria-labelledby="facts-title"><p class="eyebrow">카드의 바탕이 된 자료</p><h2 id="facts-title">측정 정보</h2><dl id="facts"></dl><p id="comparison" class="comparison"></p><p class="subtle">이 숫자는 가상 예시입니다. 무릎 관절각이나 건강 개선을 나타내지 않습니다.</p></aside>
+    </div>
+    <section class="card checkin-card" aria-labelledby="checkin-title"><p class="eyebrow">02 실행 후 체크인</p><h2 id="checkin-title">실제로는 어땠나요?</h2><p id="checkin-helper" class="subtle">먼저 오늘의 카드에서 계획을 저장해 주세요.</p>
+      <form id="checkin-form" novalidate class="no-print"><fieldset id="checkin-fields" disabled>
+        <legend>선택한 행동의 실행 상태</legend><div class="radio-row"><label><input type="radio" name="execution" value="done">실행함</label><label><input type="radio" name="execution" value="partial">일부 실행</label><label><input type="radio" name="execution" value="not_done">실행하지 않음</label></div>
+        <label for="barrier">어려웠던 점 <span class="optional">선택, 300자 이내</span></label><textarea id="barrier" maxlength="300" rows="3" placeholder="예: 계획을 떠올리는 시점이 늦었다. 개인 정보는 적지 마세요."></textarea>
+        <fieldset class="discomfort"><legend>새로운 불편이 있었나요?</legend><div class="radio-row"><label><input type="radio" name="discomfort" value="no">없음</label><label><input type="radio" name="discomfort" value="yes">있음</label></div></fieldset>
+        <button type="submit" class="primary" id="save-checkin">실행 기록 저장하기</button>
+      </fieldset></form><div id="checkin-summary" class="saved-summary" hidden></div>
+    </section>
+    <section class="history-section" aria-labelledby="history-title"><div class="history-head"><div><p class="eyebrow">03 지난 기록</p><h2 id="history-title">계획과 실행을 함께 봅니다.</h2></div><button id="print" type="button" class="secondary no-print">현재 기록 인쇄</button></div><div id="history"></div></section>
+    <footer><p>합성 데이터 데모 · KAIST 14조 유중경 HW6<br>가상 승인 상태를 사용합니다. 실제 전문가의 승인이나 제품 효과를 의미하지 않습니다.<br>생성 AI, 센서 연결, 서버 전송 없이 동작합니다.</p><button id="reset" class="text-button no-print" type="button">테스트 자료 초기화</button></footer>
+  </main>
+</body>
+</html>
